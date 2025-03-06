@@ -1,0 +1,102 @@
+usertype String;
+usertype Sessionkey;
+usertype Timestamp;
+hashfunction H;
+
+const pk2:Function;
+secret sk2:Function;
+inversekeys(pk2,sk2);
+
+protocol VISRHA-HA(RSUA, RSUB, CAR, BC)
+{
+	role CAR
+	{
+		fresh d: Nonce;
+		var IDRSUB: Nonce;
+		send_1(CAR,RSUA, {d}sk2(RSUA));
+		recv_6(RSUA, CAR,{IDRSUB}sk(CAR));
+		claim(CAR,Secret,d);
+		claim(CAR, Secret,IDRSUB);
+		claim(CAR,Niagree);
+		claim(CAR,Nisynch);
+
+	}
+
+	role BC
+	{
+		fresh RRSUB: Nonce;
+		fresh IDRSUB: Nonce;
+		fresh RRSUA:Nonce;
+		fresh lRSUA: Nonce;
+		fresh lRSUB:Nonce;
+		send_2(BC,RSUA, (IDRSUB,RRSUA,RRSUB,lRSUA,lRSUB));
+		send_3(BC,RSUB,(RRSUA,RRSUB,lRSUA,lRSUB));
+
+		claim(BC,Niagree);
+		claim(BC,Nisynch);
+	}
+
+	role RSUA
+	{
+		var d: Nonce;
+		var IDRSUB: Nonce;
+		var RRSUA:Nonce;
+		var RRSUB:Nonce;
+		fresh T2: Timestamp;
+		var T: Sessionkey;
+		var S1: Sessionkey;
+
+		var lRSUA: Nonce;
+		var lRSUB: Nonce;
+		var T3: Timestamp;
+		var S2: Sessionkey;
+		recv_1(CAR,RSUA,  {d}sk2(RSUA));
+		recv_2(BC,RSUA, (IDRSUB,RRSUA,RRSUB,lRSUA,lRSUB));
+		match(S1,(lRSUA,lRSUB,RRSUA,RRSUB,T2));
+		match(T,H(S1, T2));
+		send_4(RSUA,RSUB,{T,S1,T2,k}sk(RSUB));
+		recv_5(RSUB,RSUA,{T,S2,T3}sk(RSUA));
+		send_6(RSUA, CAR,{IDRSUB}sk(CAR));
+
+		claim(RSUA,Secret,T2);
+		claim(RSUA,Secret,S1);
+		claim(RSUA,Secret,S2);
+		claim(RSUA,Secret,T);
+		claim(RSUA,Secret,T3);
+		claim(RSUA,Alive);
+		claim(RSUA,Weakagree);
+		claim(RSUA,Niagree);
+		claim(RSUA,Nisynch);
+	}
+
+	role RSUB
+	{
+		var T: Sessionkey;
+		var S1: Sessionkey;
+		var T2: Timestamp;
+		var S2: Sessionkey;
+		fresh T3: Timestamp;
+
+		var RRSUA:Nonce;
+		var RRSUB:Nonce;
+		var lRSUA: Nonce;
+		var lRSUB: Nonce;
+		recv_3(BC,RSUB,(RRSUA,RRSUB,lRSUA,lRSUB));
+		recv_4(RSUA,RSUB,{T,S1,T2,k}sk(RSUB));
+		match(S2,(lRSUA,lRSUB,RRSUA,RRSUB,T3));
+		match(T,H(S2, T3));
+		send_5(RSUB,RSUA,{T,S2,T3}sk(RSUA));
+
+		claim(RSUB,Secret,T2);
+		claim(RSUB,Secret,T);
+		claim(RSUB,Secret,S1);
+		claim(RSUB,Secret,S2);
+		claim(RSUB,Secret,T3);
+		claim(RSUB,Alive);
+		claim(RSUB,Weakagree);
+		claim(RSUB,Niagree);
+		claim(RSUB,Nisynch);
+	}
+
+
+}

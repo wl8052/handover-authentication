@@ -1,0 +1,71 @@
+usertype String;
+usertype Sessionkey;
+usertype Timestamp;
+hashfunction H;
+
+protocol VISRHA-CS(RSUA, RSUS, BC)
+{
+	role BC
+	{
+		fresh IDRSUA: Nonce;
+		fresh IDRSUS: Nonce;
+		fresh lRSUS: Nonce;
+		fresh lRSUA: Nonce;
+		
+		send_1(BC,RSUA, (IDRSUA,lRSUA,lRSUS));
+		send_3(BC,RSUS,(IDRSUA,IDRSUS));
+		claim(BC,Niagree);
+		claim(BC,Nisynch);
+	}
+
+	role RSUA
+	{
+		
+		fresh T1: Timestamp;
+		var lRSUA: Nonce;
+		var lRSUS: Nonce;
+		var L:Sessionkey;
+		var M1:Sessionkey;
+		var IDRSUA: Nonce;
+		var IDRSUS: Nonce;
+		var M2:Sessionkey;
+		var T2:Timestamp;
+		recv_1(BC,RSUA, (IDRSUA,lRSUA,lRSUS));
+		match(L,(lRSUA,lRSUS));
+		match(M1,H(IDRSUA,T1));
+		send_2(RSUA,RSUS, {M1,T1}sk(RSUS));
+		recv_4(RSUS,RSUA,{M2,T2}sk(RSUA));
+		claim(RSUA,Secret,T1);
+		claim(RSUA,Secret,M1);
+		claim(RSUA,Secret,T2);
+		claim(RSUA,Secret,M2);
+		claim(RSUA,Alive);
+		claim(RSUA,Weakagree);
+		claim(RSUA,Niagree);
+		claim(RSUA,Nisynch);
+	}
+
+	role RSUS
+	{
+		var M1:Sessionkey;
+		var T1:Timestamp;
+		var M2:Sessionkey;
+		var IDRSUA: Nonce;
+		var IDRSUS: Nonce;
+		fresh T2: Timestamp;
+		recv_2(RSUA,RSUS, {M1,T1}sk(RSUS));
+		recv_3(BC,RSUS,(IDRSUA,IDRSUS));
+		match(M2,H(IDRSUS,T2));
+		send_4(RSUS,RSUA,{M2,T2}sk(RSUA));
+		claim(RSUS,Secret,T1);
+		claim(RSUS,Secret,M1);
+		claim(RSUS,Secret,T2);
+		claim(RSUS,Secret,M2);
+		claim(RSUS,Alive);
+		claim(RSUS,Weakagree);
+		claim(RSUS,Niagree);
+		claim(RSUS,Nisynch);
+	}
+
+
+}
